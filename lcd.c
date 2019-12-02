@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -99,9 +100,9 @@ void lcd_entry_mode(entry_direction direction, bool shift)
 }
 
 /// Display on/off toggle
-void lcd_toggle_display(bool display_on, bool cursor_on, bool character_blink)
+void lcd_toggle_display(bool display_on, bool cursor_on, bool cursor_blink)
 {
-    lcd_send_control((1 << 3) | (display_on << 2) | (cursor_on << 1) | (character_blink << 0));
+    lcd_send_control((1 << 3) | (display_on << 2) | (cursor_on << 1) | (cursor_blink << 0));
 }
 
 typedef enum {lcd_shift_cursor = 0, lcd_shift_screen = 1} to_shift;
@@ -124,28 +125,53 @@ void lcd_write_string(char *string)
     }
 }
 
+/// Set LCD configuration
+void lcd_function_set(uint8_t function)
+{
+    lcd_send_control(0x20 | function);
+}
+
 /// Move cursor
-void lcd_move_cursor(uint8_t row, uint8_t col)
+void lcd_cursor(uint8_t row, uint8_t col)
 {
     lcd_send_control(row == 0 ? 0x80 + col : 0xc0 + col);
 }
 
-
 /// Initialize the LCD
-// TODO: rewrite each magic control into an actual function
-void lcd_setup() {
+void lcd_setup()
+{
     LCD_DATA_DIRECTION |= LCD_DATA_BITS;
     LCD_CONTROL_DIRECTION |= LCD_CONTROL_BITS;
+
+    // Delay to hit correct voltage
     _delay_ms(15);
+
+    // Try 3 times to set to 4-bit mode
     lcd_send_nibble(0x30);
-    _delay_ms(4);
+    _delay_ms(5);
     lcd_send_nibble(0x30);
-    _delay_us(100);
+    _delay_ms(5);
     lcd_send_nibble(0x30);
+    _delay_ms(1);
+
+    // Set to 4-bit interface
     lcd_send_nibble(0x20);
     _delay_ms(2);
-    lcd_send_control(0x28);     // Function Set: 4-bit interface, 2 lines
-    lcd_send_control(0x0f);     // Display and cursor on
+
+    // LCD 4-bit mode, 2 lines, toggle display on
+    lcd_function_set(0x08);
+    lcd_toggle_display(true, true, true);
+}
+
+/// Convenience
+char lcd_buffer[16];
+void lcd_sprintf(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(lcd_buffer, 16, fmt, args);
+    va_end(args);
+    lcd_write_string(lcd_buffer);
 }
 
 uint8_t lcd_closest_button(uint8_t adc_value)
