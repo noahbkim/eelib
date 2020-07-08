@@ -9,8 +9,8 @@ void rotary_construct(rotary_t* rotary, uint16_t value)
     rotary->value = value;
     *rotary->reg->ddr &= ~((1 << rotary->bit0) | (1 << rotary->bit1));
     *rotary->reg->port |= (1 << rotary->bit0) | (1 << rotary->bit1);
-    PCICR |= (1 << PCIE0);
-    PCMSK0 |= (1 << rotary->bit0) | (1 << rotary->bit1);
+    PCICR |= (1 << PCIE(rotary->reg));
+    *PCMSK(rotary->reg) |= (1 << rotary->bit0) | (1 << rotary->bit1);
     rotary->pin_last = *rotary->reg->pin;
 }
 
@@ -37,7 +37,7 @@ void rotary_change_interrupt(rotary_t* rotary)
     switch (rotary_difference(rotary))
     {
         case -1:
-            if (rotary->value > 0)
+            if (rotary->value > rotary->value_minimum)
             {
                 --rotary->value;
             }

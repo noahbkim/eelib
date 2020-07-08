@@ -16,7 +16,7 @@ void lcd_send_data(uint8_t data);
 void lcd_clear();
 void lcd_write_string(char *string);
 void lcd_cursor(uint8_t row, uint8_t col);
-void lcd_sprintf(const char* fmt, ...);
+int lcd_sprintf(const char* fmt, ...);
 
 uint8_t lcd_button(uint8_t adc_value);
 

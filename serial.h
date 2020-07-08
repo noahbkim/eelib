@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <avr/interrupt.h>
 
 #define SERIAL_TRANSMIT_BUFFER_SIZE 64
 #define SERIAL_RECEIVE_BUFFER_SIZE 64
@@ -75,8 +76,8 @@ bool serial_read_available(serial_t* serial);
 
 // Macro for setting up a serial channel, creates serial_t* S<channel>
 #define SERIAL_SETUP(channel)\
-serial_t SERIAL##channel = { &UBRR##channel##H, &UBRR##channel##L, &UCSR##channel##A, &UCSR##channel##B, &UCSR##channel##C, &UDR##channel };\
-serial_t* const S##channel = &SERIAL##channel;\
+static serial_t SERIAL##channel = { &UBRR##channel##H, &UBRR##channel##L, &UCSR##channel##A, &UCSR##channel##B, &UCSR##channel##C, &UDR##channel };\
+static serial_t* const S##channel = &SERIAL##channel;\
 ISR(USART_UDRE_vect) { serial_on_empty_interrupt(S##channel); }\
 ISR(USART_RX_vect) { serial_on_receive_interrupt(S##channel); }\
 

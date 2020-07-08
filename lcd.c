@@ -6,6 +6,8 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
+#include "ambient.h"
+
 #define LCD_DATA_DIRECTION DDRD
 #define LCD_DATA_BITS ((1 << PD7) | (1 << PD6) | (1 << PD5) | (1 << PD4))
 #define LCD_DATA_PORT PORTD
@@ -160,18 +162,20 @@ void lcd_setup()
 
     // LCD 4-bit mode, 2 lines, toggle display on
     lcd_function_set(0x08);
-    lcd_toggle_display(true, true, true);
+    lcd_toggle_display(true, false, false);
 }
 
 /// Convenience
-char lcd_buffer[16];
-void lcd_sprintf(const char* fmt, ...)
+char lcd_buffer[17];
+
+int lcd_sprintf(const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    vsnprintf(lcd_buffer, 16, fmt, args);
+    int written = vsnprintf(lcd_buffer, 17, fmt, args);
     va_end(args);
     lcd_write_string(lcd_buffer);
+    return written;
 }
 
 uint8_t lcd_closest_button(uint8_t adc_value)
